@@ -1,6 +1,6 @@
 ﻿namespace OrderAPI.Models
 {
-    public class ItemsOrderDto
+    public class ItemOrderDto
     {
         public int Id { get; set; }
         public int ProductId { get; set; }

@@ -19,9 +19,7 @@ namespace OrderAPI.Controllers
         [HttpGet("order/list")]    
         public async Task<ActionResult<IEnumerable<ItemOrderModel>>> GetOrders()
         {
-            var orders = await _db.ItemOrder
-                .Include(o => o.Order)
-                .Include(o => o.Product)
+            var orders = await _db.Order             
                 .ToListAsync();
 
             return Ok(orders);
@@ -52,7 +50,7 @@ namespace OrderAPI.Controllers
                 ClientEmail = order.ClientEmail,
                 Paid = order.Paid,
                 TotalValue = (double) products.Sum(o => o.Product.Value * o.Amount), 
-                ItemsOrder = products.Select(product => new ItemsOrderDto
+                Items = products.Select(product => new ItemOrderDto
                     {
                         Id = product.Order.Id,
                         ProductId = product.Id,

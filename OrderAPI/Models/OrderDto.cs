@@ -7,6 +7,6 @@
         public string ClientEmail { get; set; }
         public bool Paid { get; set; }
         public double TotalValue { get; set; }
-        public List<ItemsOrderDto> ItemsOrder { get; set; }
+        public List<ItemOrderDto> Items { get; set; }
     }
 }
