@@ -1,4 +1,4 @@
-﻿namespace OrderAPI.Models
+﻿namespace OrderAPI.Dtos
 {
     public class OrderDto
     {

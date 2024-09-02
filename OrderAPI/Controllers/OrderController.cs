@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrderAPI.Database;
 using OrderAPI.Models;
+using OrderAPI.Dtos;
 
 namespace OrderAPI.Controllers
 {
@@ -65,34 +66,34 @@ namespace OrderAPI.Controllers
         }
 
         [HttpPost("order/add")]
-        public async Task<ActionResult<ItemOrderModel>> AddOrder(ItemOrderModel itemOrder)        
+        public async Task<ActionResult<ItemOrderModel>> AddOrder(AddOrderModel order)        
         {
             // Verifica se a quantidade é pelo menos 1
-            if (itemOrder.Amount < 1)
+            if (order.Amount < 1)
             {
                 return BadRequest(new { message = "The quantity must be equal to or greater than 1!" });
             }
             
             // Verifica se o produto existe
-            var existingProduct = await _db.Product.FindAsync(itemOrder.ProductId);
+            var existingProduct = await _db.Product.FindAsync(order.ProductId);
             if (existingProduct == null)
             {
-                return NotFound(new { message = $"Product ID: {itemOrder.ProductId} not found!" });
+                return NotFound(new { message = $"Product ID: {order.ProductId} not found!" });
             }
 
             // Cria o Pedido
             var newOrder = new OrderModel();
 
             // Verifica se o pedido existe
-            var existingOrder = await _db.Order.FindAsync(itemOrder.OrderId);
+            var existingOrder = await _db.Order.FindAsync(order.OrderId);
             if (existingOrder == null)
             {
                 try
-                {
-                    newOrder.ClientName = itemOrder.Order.ClientName;
-                    newOrder.ClientEmail = itemOrder.Order.ClientEmail;
-                    newOrder.CreationDate = itemOrder.Order.CreationDate;
-                    newOrder.Paid = itemOrder.Order.Paid;
+                {                    
+                    newOrder.ClientName = order.ClientName;
+                    newOrder.ClientEmail = order.ClientEmail;
+                    newOrder.CreationDate = DateTime.Now;
+                    newOrder.Paid = order.Paid;
 
                     _db.Order.Add(newOrder);
                     await _db.SaveChangesAsync();
@@ -114,7 +115,7 @@ namespace OrderAPI.Controllers
                 {
                     Order = newOrder,
                     Product = existingProduct,
-                    Amount = itemOrder.Amount
+                    Amount = order.Amount
                 };
 
                 _db.ItemOrder.Add(newItemOrder);
@@ -126,6 +127,46 @@ namespace OrderAPI.Controllers
             }
 
             return Ok(new { message = "ItemOrder inserted successfully!" });
-        }        
+        }
+
+        [HttpPut("order/edit")]
+        public async Task<IActionResult> UpdateOrder(OrderModel order)
+        {
+            _db.Entry(order).State = EntityState.Modified;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return BadRequest(new { message = "Error in update order!" });
+            }
+            return Ok(new { message = "Order updated successfully!" });
+        }
+
+        [HttpDelete("order/{id}")]        
+        public async Task<IActionResult> DeleteOrder(int id)
+        {                        
+            var order = await _db.Order.FindAsync(id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+            
+            var items = await _db.ItemOrder.FirstOrDefaultAsync(o => o.OrderId == id);
+
+            // Caso houver items no pedido exclui
+            if (items != null)
+            {
+                _db.ItemOrder.Remove(items);
+                await _db.SaveChangesAsync();
+            }            
+
+            _db.Order.Remove(order);
+            await _db.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

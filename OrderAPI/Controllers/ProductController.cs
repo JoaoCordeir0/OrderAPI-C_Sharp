@@ -41,5 +41,36 @@ namespace OrderAPI.Controllers
 
             return Ok(new { message = "Product inserted successfully!" });
         }
+
+        [HttpPut("product/edit")]
+        public async Task<IActionResult> UpdateProduct(ProductModel product)
+        {
+            _db.Entry(product).State = EntityState.Modified;
+
+            try
+            {                
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return BadRequest(new { message = "Error in update product!" });
+            }
+            return Ok(new { message = "Product updated successfully!" });
+        }
+       
+        [HttpDelete("product/{id}")]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            var product = await _db.Product.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound(new { message = $"Product ID: {id} not found!" });
+            }
+
+            _db.Product.Remove(product);
+            await _db.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
